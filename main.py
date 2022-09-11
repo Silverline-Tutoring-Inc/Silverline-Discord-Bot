@@ -18,6 +18,12 @@ import sys
 from discord import Embed, Color
 from discord.ext.commands import has_permissions, MissingPermissions
 import json
+from discord.ext import commands
+from discord.ext import buttons
+
+
+
+
 
 
 
@@ -67,27 +73,25 @@ import json
 # ---------------------------------------- #
 
 
-# ------------ PREFIX GETTER --------- #
+# ------------ PREFIX GETTER ------------ #
 def get_prefix(client, message):
     return db[str(message.guild.id)]
 
 
-# ------------ INTENTIONS/SETUP--------- #
+# ------------ INTENTIONS/SETUP ------------ #
 intents = discord.Intents.all()
 intents.members = True
 intents.reactions = True
 client = commands.Bot(command_prefix=get_prefix, intents=intents)
-#DiscordComponents(client)
 client.remove_command('help')
 
-# ------------ GLOBAL VARS --------- #
+# ------------ GLOBAL VARS ------------ #
 current_date = None
 current_time = None
 currentDay = None
 est = pytz.timezone('US/Eastern')
 
-
-# ------------ LOADING/UNLOADING ------- #
+# ------------ LOADING?U------------ #
 @client.command()
 async def load(extension_name: str):
     try:
@@ -224,54 +228,61 @@ async def rename(ctx, name):
 @client.command(pass_context=True)
 async def ticket(ctx):
     guild = ctx.guild
+    await ctx.message.delete()
     embed = discord.Embed(
         title = 'Silverline Tickets',
-        description = 'Welcome to the Ticket System, react below 📩 to make a ticket. The use of the ticket allows users to suggest new ideas and other main components that need to be fixed. We accept feedback from all of our users in order to maintain the best possible experience for you!',
+        description = 'Welcome to the Ticket System, react below 📩 to make a help ticket. Personalized help will be given in the created channel. Afterwards, please close your ticket.',
         color = 0xFFFFFF
     )
 
-    embed.set_footer(text=f"{ctx.author}'s Ticket")
-
+    embed.set_footer(text=f"Silverline Tutoring Tickets | EIN: 88-3149458")
     msg = await ctx.send(embed=embed)
     await msg.add_reaction("📩")
-    button = Button(label = "Click me", style=discord.Buttonstyle.green)
-    
-    
 
-    def check(reaction, user):
-      return str(reaction) == '📩' and ctx.author == user
+    @client.event
+    async def on_reaction_add(reaction, user):
+      if user == "Silverline Assistant#2144":
+        pass
+      else:
+        if reaction.emoji == "📩" and user != "Silverline Assistant#2144":
+          name = '➤ Tickets'
+          category1 = discord.utils.get(ctx.guild.categories, name=name)
+          if user == "Silverline Assistant#2144":
+            pass
+          else:
+            await guild.create_text_channel(name=f'ticket - {user}', category=category1)
+            string = str(user).lower()
+            index = string.index("#")
+            final_string = string[:index] + string[index+1:]
+            for server in client.guilds:
+              ticket_channel = discord.utils.get(server.channels, name=f'ticket-{final_string}')
+            embed = discord.Embed(
+              title = 'Steps For Silverline Tutoring Help',
+              description = f'Welcome to the Ticket System {user.mention}! Use this channel to ask questions to recieve personalized assistance from one of our helpers. Please be specific in the questions that you ask and provide as much as detail as possible. We will get back to as soon as possible! To close the ticket use the ~close method once your problem is solved! Rate your experience at https://g.co/kgs/S9BC6v',
+              color = 0xFFFFFF
+            )
+            #ctx.guild.get_role(ctx.guild.id),
+            print(user)
+            if user == "Silverline Assistant#2144":
+              pass
+            else:
+              await ticket_channel.set_permissions(target=user, send_messages=True, read_messages=True)
+              embed.set_footer(text=f"Silverline Tutoring Tickets | EIN: 88-3149458")
 
-    await client.wait_for("reaction_add", check=check)
-    name = 'Tickets'
-    category1 = discord.utils.get(ctx.guild.categories, name=name)
-    await guild.create_text_channel(name=f'ticket - {ctx.author}', category=category1)
-    string = str(ctx.author).lower()
-    index = string.index("#")
-    final_string = string[:index] + string[index+1:]
-    for server in client.guilds:
-      ticket_channel = discord.utils.get(server.channels, name=f'ticket-{final_string}')
-    embed = discord.Embed(
-        title = 'Steps For Silverline Tutoring Help',
-        description = f'Welcome to the Ticket System {ctx.author.mention}! Use this channel to provide suggestions and any other questions you would like to be solved. Please be specific in the questions that you ask and provide as much as detail as possible. We will get back to as soon as possible! To close the ticket use the ~close method to close your ticket once your problem is solved!',
-        color = 0xFFFFFF
-    )
-    embed.set_footer(text="Silverline Tutoring Help")
+              await ticket_channel.send(embed=embed)
 
-    msg = await ticket_channel.send(embed=embed)
-
-
-@client.command(pass_context = True)
+@client.command()
 async def close(ctx):
   guild = ctx.guild
-  string = str(ctx.author).lower()
-  index = string.index("#")
-  final_string = string[:index] + string[index+1:]
+  string2 = str(ctx.author).lower()
+  index2 = string2.index("#")
+  final_string2 = string2[:index2] + string2[index2+1:]
   for server in client.guilds:
-      ticket_channel = discord.utils.get(server.channels, name=f'ticket-{final_string}')
-  print(ticket_channel.id)
+      ticket_channel = discord.utils.get(server.channels, name=f'ticket-{final_string2}')
   channel = client.get_channel(ticket_channel.id)
   await channel.delete()
-    
+  
+
 # ------------ WELCOME MEMBERS --------- #
 @client.event
 async def on_member_join(ctx):
